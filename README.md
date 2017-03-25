@@ -10,7 +10,7 @@ Autor
  
 Colaboradores
 ------------
-* ...
+* Enrique Esteban
 * xxx
 
 Descripción
