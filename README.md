@@ -11,7 +11,7 @@ Autor
 Colaboradores
 ------------
 * Enrique Esteban
-* xxx
+* Iván Lucas
 
 Descripción
 ------------
