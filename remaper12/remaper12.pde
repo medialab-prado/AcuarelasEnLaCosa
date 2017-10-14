@@ -62,13 +62,14 @@ int mode = MODE_CONFIG;
 
 int numPixels;
 int[] previousFrame;
+BrightnessContrastController bc;
 
 public void setup() {
 
   size(1024, 768, P3D);
-  // Keystone will only work with P3D or OPENGL renderers,
+  // Keystone will only BrightnessContrastController with P3D or OPENGL renderers,
   // since it relies on texture mapping to deform
-
+bc=new BrightnessContrastController();
 
 numPixels = 640*480;
 
@@ -93,7 +94,7 @@ numPixels = 640*480;
    }      
    
   cam = new Capture(this, cameras[1]);
-  cam.start();     
+  //cam.start();     
   // cam = new IPCapture(this, "http://192.168.3.81:8080/?action=stream", "", "");
   cam.start();
 
@@ -155,6 +156,7 @@ public void draw() {
     cam.read();
   cam.loadPixels();
    frameDif(cam);
+   bc.destructiveShift(finalisimo,(int)map(mouseX,0,width,-255,255),1);
    cam.updatePixels();
    
   } 
