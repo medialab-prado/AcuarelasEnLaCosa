@@ -38,6 +38,7 @@ import org.mlp.cosa.Point;
 import org.mlp.cosa.Panel;
 import org.mlp.cosa.Panels;
 import java.util.*;
+import controlP5.*;
 
 Capture cam;
 //IPCapture cam;
@@ -89,10 +90,16 @@ Cell lastCell;
 List<Particula> particulas;
 List<PVector> vertices;
 
+//GUI
+ControlP5 cp5;
+
+Data data;
 
 public void setup() {
 
   size(1024, 768, P3D);
+  
+  data = new Data();
   // Keystone will only BrightnessContrastController with P3D or OPENGL renderers,
   // since it relies on texture mapping to deform
   bc=new BrightnessContrastController();
@@ -144,6 +151,8 @@ public void setup() {
 
   render = new CosaRender();
   particulas = new ArrayList();
+  
+  initGUI();
 }
 
 
@@ -161,12 +170,13 @@ public void draw() {
     //ACTUALIZAMOS CAMARA SI ES POSIBLE
     cam.read();
     cam.loadPixels();
+    bc.destructiveShift(cam, 0, data.contrast);
+    
     frameDif(cam);
-    bc.destructiveShift(finalisimo, (int)map(mouseX, 0, width, 0, 0), 1);
-    cam.updatePixels();
+    bc.destructiveShift(finalisimo, (int)data.brightness, 1);
     //PINTAMOS LA IMAGEN EN EL CANVAS DE ORIGEN
     offscreenOrigin.beginDraw();
-    offscreenOrigin.image(cam, 0, 0, 1024, 768);
+    offscreenOrigin.image(finalisimo, 0, 0, 1024, 768);
     offscreenOrigin.endDraw();
   } 
 
@@ -206,7 +216,7 @@ public void draw() {
       offscreen.background(0);
       //offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
       // offscreen.fill(0, 255, 0);
-      qgrid.drawGrid(offscreen, offscreenOrigin);
+      qgrid.drawGrid(offscreen, finalisimo);
 
       // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
       offscreen.endShape();
@@ -242,6 +252,8 @@ public void draw() {
     fill(255, 0, 0);
   }
   rect(100, 10, abs(smoothMovement-lastMovementSum)/1000.0, 10);
+  
+  text("particulas"+particulas.size()+"\n fps: "+ frameRate, 10, 30);
 }
 
 public void frameDif(PImage video) {
@@ -271,10 +283,10 @@ public void frameDif(PImage video) {
     float finalG = green(finalisimo.pixels[i]);
     float finalB = blue(finalisimo.pixels[i]);
 
-    float vel = 0.05;
-    finalR = finalR + (currR - finalR)*vel;
-    finalG = finalG + (currG - finalG)*vel;
-    finalB = finalB + (currB - finalB)*vel;
+   
+    finalR = finalR + (currR - finalR)*data.smooth;
+    finalG = finalG + (currG - finalG)*data.smooth;
+    finalB = finalB + (currB - finalB)*data.smooth;
 
     //  finalR= 255;
     //  finalG = currG;

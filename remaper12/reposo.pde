@@ -4,7 +4,7 @@ public void drawReposo() {
   background(0);
 
   fill(255);
-  text("particulas"+particulas.size()+" "+ frameRate, 10, 10);
+  
 
   cosa.setColor(255);
 
