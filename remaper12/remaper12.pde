@@ -24,7 +24,7 @@ import processing.video.*;
 
 
 
-import ipcapture.*;
+//import ipcapture.*;
 import java.util.ArrayList;
 import java.util.List;
 import deadpixel.keystone.remaper.CornerPinSurface;
@@ -41,6 +41,8 @@ PImage finalisimo;
 PImage bg;
 Keystone ks;
 Keystone ksTarget;
+
+QuadGrid qgrid;
 
 
 List<CornerPinSurface> surfaces;
@@ -120,6 +122,8 @@ numPixels = 640*480;
   offscreen = createGraphics(SURFACE_X, SURFACE_Y, P3D);
   offscreenOrigin = createGraphics(1024, 768, P3D);
   offscreentarget = createGraphics(1024, 768, P3D);
+  
+   qgrid = new QuadGrid(offscreenOrigin, 10, 10);
 
   previousFrame = new int[640*480];
   finalisimo = createImage(640, 480, RGB);
@@ -156,7 +160,7 @@ public void draw() {
     cam.read();
   cam.loadPixels();
    frameDif(cam);
-   bc.destructiveShift(finalisimo,(int)map(mouseX,0,width,-255,255),1);
+   bc.destructiveShift(finalisimo,(int)map(mouseX,0,width,0,0),1);
    cam.updatePixels();
    
   } 
@@ -225,7 +229,7 @@ public void draw() {
       // offscreen.fill(0, 255, 0);
 
 
-      offscreen.noStroke();
+    /*  offscreen.noStroke();
       offscreen.beginShape(QUAD);
       offscreen.texture(offscreenOrigin);
 
@@ -239,7 +243,10 @@ public void draw() {
 
       offscreen.vertex(SURFACE_X, SURFACE_Y, pointBR.x, pointBR.y);
       offscreen.vertex(0, SURFACE_Y, pointBL.x, pointBL.y);
-
+        //  Vertices must be in order TL, TR, BR, BL
+       qgrid.setCorners(pointTL.x,pointTL.y, pointTR.x,pointTR.y, 
+       pointBR.x,pointBR.y, pointBL.x,pointBL.y );*/
+       qgrid.drawGrid(offscreen,offscreenOrigin);
 
       // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
       offscreen.endShape();
