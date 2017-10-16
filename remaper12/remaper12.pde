@@ -32,7 +32,12 @@ import deadpixel.keystone.remaper.Keystone;
 import deadpixel.keystone.remaper.MeshPoint;
 import processing.core.PApplet;
 import processing.core.PGraphics;
-
+import org.mlp.cosa.Cell;
+import org.mlp.cosa.Cosa;
+import org.mlp.cosa.Point;
+import org.mlp.cosa.Panel;
+import org.mlp.cosa.Panels;
+import java.util.*;
 
 Capture cam;
 //IPCapture cam;
@@ -58,53 +63,61 @@ PGraphics offscreenOrigin;
 PGraphics offscreentarget;
 
 int MODE_CONFIG = 0;
-int MODE_VIEW = 1;
+int MODE_PINTANDO = 1;
+int MODE_REPOSO = 2;
 
 int mode = MODE_CONFIG;
 
+int timeout = 0;
+int TIMEOUT_TIME = 60 * 1000; //60 segundos
+
+//controld e brillo
+BrightnessContrastController bc;
+
+//FILTR DE VIDEO
 int numPixels;
 int[] previousFrame;
-BrightnessContrastController bc;
+
+int movementSum = 0;
+float lastMovementSum = 0;
+float smoothMovement = 0;
+
+//REPOSO
+Cosa cosa;
+CosaRender render;
+Cell lastCell;
+List<Particula> particulas;
+List<PVector> vertices;
+
 
 public void setup() {
 
   size(1024, 768, P3D);
   // Keystone will only BrightnessContrastController with P3D or OPENGL renderers,
   // since it relies on texture mapping to deform
-bc=new BrightnessContrastController();
+  bc=new BrightnessContrastController();
 
-numPixels = 640*480;
-
-
-
+  numPixels = 640*480;
   //CAMARA INICIO
-   String[] cameras = Capture.list();
-   
-   if (cameras.length == 0) {
-   println("There are no cameras available for capture.");
-   exit();
-   } else {
-   println("Available cameras:");
-   for (int i = 0; i < cameras.length; i++) {
-   println(i,cameras[i]);
-   }
-   
-   // The camera can be initialized directly using an 
-   // element from the array returned by list():
-   // cam = new Capture(this, 640, 480, "HD Pro Webcam C920", 30);
-   
-   }      
-   
+  String[] cameras = Capture.list();
+
+  if (cameras.length == 0) {
+    println("There are no cameras available for capture.");
+    exit();
+  } else {
+    println("Available cameras:");
+    for (int i = 0; i < cameras.length; i++) {
+      println(i, cameras[i]);
+    }
+  }      
+
   cam = new Capture(this, cameras[1]);
   //cam.start();     
   // cam = new IPCapture(this, "http://192.168.3.81:8080/?action=stream", "", "");
   cam.start();
 
-
   //PLANTILLA FINAL
   bg = loadImage("paneles.jpg");
-
-
 
   ks = new Keystone(this);
   ksTarget = new Keystone(this);
@@ -114,88 +127,55 @@ numPixels = 640*480;
   ks.startCalibration();
   ksTarget.stopCalibration();
 
-  // We need an offscreen buffer to draw the surface we
-  // want projected
-  // note that we're matching the resolution of the
-  // CornerPinSurface.
-  // (The offscreen buffer can be P2D or P3D)
   offscreen = createGraphics(SURFACE_X, SURFACE_Y, P3D);
   offscreenOrigin = createGraphics(1024, 768, P3D);
   offscreentarget = createGraphics(1024, 768, P3D);
-  
-   qgrid = new QuadGrid(offscreenOrigin, 10, 10);
+
+  qgrid = new QuadGrid(offscreenOrigin, 10, 10);
 
   previousFrame = new int[640*480];
   finalisimo = createImage(640, 480, RGB);
+  
+  //estado de reposo
+  cosa = new Cosa();
+  File pathP = sketchFile("paneles.txt");
+  File pathC = sketchFile("CoordCeldas.txt");
+  cosa.init(pathP, pathC);
+
+  render = new CosaRender();
+  particulas = new ArrayList();
 }
 
 
 public void draw() {
 
-  // Convert the mouse coordinate into surface coordinates
-  // this will allow you to use mouse events inside the
-  // surface from your screen.
-  // PVector surfaceMouse = surface.getTransformedMouse();
-
-  // most likely, you'll want a black background to minimize
-  // bleeding around your projection area
-
-
-  //PLANTILLA FINAL    
   background(bg);
-
-
-  offscreenOrigin.beginDraw();
-
-
 
 
   //CAMARA INICIO
   if (cam.available()) {
     // cam.read();
     //   }
-
     //  offscreenOrigin.image(cam, 0, 0);
     //if (cam.isAvailable()) {
+    //ACTUALIZAMOS CAMARA SI ES POSIBLE
     cam.read();
-  cam.loadPixels();
-   frameDif(cam);
-   bc.destructiveShift(finalisimo,(int)map(mouseX,0,width,0,0),1);
-   cam.updatePixels();
-   
+    cam.loadPixels();
+    frameDif(cam);
+    bc.destructiveShift(finalisimo, (int)map(mouseX, 0, width, 0, 0), 1);
+    cam.updatePixels();
+    //PINTAMOS LA IMAGEN EN EL CANVAS DE ORIGEN
+    offscreenOrigin.beginDraw();
+    offscreenOrigin.image(cam, 0, 0, 1024, 768);
+    offscreenOrigin.endDraw();
   } 
-   
-   offscreenOrigin.image(cam, 0, 0, 1024, 768);
-
- // 
-  //IMPORTANTE meter la variable offscreenOrigin. delante de imagen 
-
-  // The following does the same, and is faster when just drawing the image
-  // without any additional resizing, transformations, or tint.
-  //set(0, 0, cam);
 
 
-
-  offscreenOrigin.endDraw();    
-
-
-
-  /**    
-   offscreenOrigin.fill(255, 0, 0);
-   float w = offscreenOrigin.width / 10;
-   float h = offscreenOrigin.height / 10;
-   for (int i = 0; i <= 10; i++) {
-   for (int j = 0; j <= 10; j++) { 
-   offscreenOrigin.fill(random(50+20 * i), 10 * j,random(i-j*20));
-   offscreenOrigin.rect(w * i, h * j, w, h);
-   offscreenOrigin.fill(255);
-   offscreenOrigin.text(""+i+":"+j,w * i-w/2, h * j-h/2);
-   }
-   }
-   offscreenOrigin.endDraw();
-   */
-
-
+  boolean isMoving = false;
+  float vx = abs(smoothMovement-lastMovementSum);
+  if (vx > 50000) {
+    isMoving = true;
+  } 
 
   int i = 0;
   if (mode == MODE_CONFIG) {
@@ -203,7 +183,7 @@ public void draw() {
     //IMPORTANTE meter dentro imagen la variable cam que es como se llama la capturacion de pantalla      
 
     image(finalisimo, 0, 0, 1024, 768);
-  // image(finalisimo, 0, 0, 1024*0.2, 768*0.2);
+    // image(finalisimo, 0, 0, 1024*0.2, 768*0.2);
     for (CornerPinSurface surface : surfaces) {
 
       // render the scene, transformed using the corner pin surface
@@ -217,51 +197,60 @@ public void draw() {
       offscreen.endDraw();
       i++;
     }
-  } else {
+  } else if (mode == MODE_PINTANDO) {
     noStroke();
     for (int ii = 0; ii<surfaces.size(); ii++) {
-      CornerPinSurface surface = surfaces.get(ii);
       CornerPinSurface surfaceTarget = surfacesTarget.get(ii);
 
       offscreen.beginDraw();
       offscreen.background(0);
       //offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
       // offscreen.fill(0, 255, 0);
-
-
-    /*  offscreen.noStroke();
-      offscreen.beginShape(QUAD);
-      offscreen.texture(offscreenOrigin);
-
-      MeshPoint pointTL = surface.getMeshPoint(CornerPinSurface.TL);
-      MeshPoint pointTR = surface.getMeshPoint(CornerPinSurface.TR);
-      MeshPoint pointBL = surface.getMeshPoint(CornerPinSurface.BL);
-      MeshPoint pointBR = surface.getMeshPoint(CornerPinSurface.BR);
-
-      offscreen.vertex(0, 0, pointTL.x, pointTL.y);
-      offscreen.vertex(SURFACE_X, 0, pointTR.x, pointTR.y);
-
-      offscreen.vertex(SURFACE_X, SURFACE_Y, pointBR.x, pointBR.y);
-      offscreen.vertex(0, SURFACE_Y, pointBL.x, pointBL.y);
-        //  Vertices must be in order TL, TR, BR, BL
-       qgrid.setCorners(pointTL.x,pointTL.y, pointTR.x,pointTR.y, 
-       pointBR.x,pointBR.y, pointBL.x,pointBL.y );*/
-       qgrid.drawGrid(offscreen,offscreenOrigin);
+      qgrid.drawGrid(offscreen, offscreenOrigin);
 
       // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
       offscreen.endShape();
       offscreen.endDraw();
       surfaceTarget.render(offscreen);
+      if (millis()>timeout) {
+        mode = MODE_REPOSO;
+      }
     }
+
+    //QUI METEMOS EL TIMEOUT SI ESTAMOS PINTANDO Y NOHAY MOVIMIENTO
+  } else if (mode == MODE_REPOSO) {
+    noStroke();
+    drawReposo();
+    if (isMoving) {
+      mode = MODE_PINTANDO;
+    }
+    //MODO REPOSO
+  } else {
+    //entramos en error
+    
+    println("ERROR ESTAMOS EN UN ESTADO INCORRECTO");
   }
 
-  // surface.
+
+  text("movement"+vx, 10, 10);
+  //si detectamos una variación en la cantidad de movimiento de más de x
+  //pasamos al estado de juego
+  if (isMoving) {
+    fill(0, 255, 0);
+    timeout = millis() + TIMEOUT_TIME;
+  } else {
+    fill(255, 0, 0);
+  }
+  rect(100, 10, abs(smoothMovement-lastMovementSum)/1000.0, 10);
 }
 
 public void frameDif(PImage video) {
   //video.loadPixels(); // Make its pixels[] array available
   finalisimo.loadPixels();
-  int movementSum = 0; // Amount of movement in the frame
+  // Amount of movement in the frame
+  lastMovementSum = smoothMovement;
+  smoothMovement = smoothMovement +(movementSum-smoothMovement)*0.1;
+  movementSum = 0;
   for (int i = 0; i < numPixels; i++) { // For each pixel in the video frame...
     color currColor = video.pixels[i];
     color prevColor = previousFrame[i];
@@ -282,14 +271,14 @@ public void frameDif(PImage video) {
     float finalG = green(finalisimo.pixels[i]);
     float finalB = blue(finalisimo.pixels[i]);
 
-float vel = 0.05;
+    float vel = 0.05;
     finalR = finalR + (currR - finalR)*vel;
     finalG = finalG + (currG - finalG)*vel;
     finalB = finalB + (currB - finalB)*vel;
 
-   //  finalR= 255;
-   //  finalG = currG;
-   //  finalB = currB;
+    //  finalR= 255;
+    //  finalG = currG;
+    //  finalB = currB;
     // Add these differences to the running tally
     movementSum += diffR + diffG + diffB;
     // Render the difference image to the screen
@@ -328,12 +317,15 @@ public void keyPressed() {
     // saves the layout
 
     if (mode == MODE_CONFIG) {
-      mode = MODE_VIEW;
+      mode = MODE_PINTANDO;
       ks.stopCalibration();
       ksTarget.startCalibration();
-    } else {
+    } else if (mode == MODE_PINTANDO) {
+      mode = MODE_REPOSO;
+      ksTarget.stopCalibration();
+      ks.startCalibration();
+    } else if (mode == MODE_REPOSO) {
       mode = MODE_CONFIG;
-
       ksTarget.stopCalibration();
       ks.startCalibration();
     }
