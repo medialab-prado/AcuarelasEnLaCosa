@@ -90,6 +90,7 @@ CosaRender render;
 Cell lastCell;
 List<Particula> particulas;
 List<PVector> vertices;
+private float[] indicePanels;
 
 //GUI
 ControlP5 cp5;
@@ -99,6 +100,8 @@ Data data;
 public void setup() {
 
   size(1024, 768, P3D);
+  
+  
 
   data = new Data();
   // Keystone will only BrightnessContrastController with P3D or OPENGL renderers,
@@ -149,6 +152,8 @@ public void setup() {
   File pathP = sketchFile("paneles.txt");
   File pathC = sketchFile("CoordCeldas.txt");
   cosa.init(pathP, pathC);
+  
+  indicePanels = new float[cosa.getPanels().size()];
 
   render = new CosaRender();
   particulas = new ArrayList();
@@ -159,7 +164,7 @@ public void setup() {
 
 public void draw() {
 
-  background(bg);
+
 
 
   //CAMARA INICIO
@@ -209,23 +214,64 @@ public void draw() {
       i++;
     }
   } else if (mode == MODE_PINTANDO) {
+      background(bg);
+    /* noStroke();
+     for (int ii = 0; ii<surfaces.size(); ii++) {
+     CornerPinSurface surfaceTarget = surfaces.get(ii);
+     
+     offscreen.beginDraw();
+     offscreen.background(0);
+     //offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
+     // offscreen.fill(0, 255, 0);
+     
+     //*  Vetices in order TL, TR, BR, BL
+     MeshPoint pointTL = surfaceTarget.getMeshPoint(CornerPinSurface.TL);
+     MeshPoint pointTR = surfaceTarget.getMeshPoint(CornerPinSurface.TR);
+     MeshPoint pointBL = surfaceTarget.getMeshPoint(CornerPinSurface.BL);
+     MeshPoint pointBR = surfaceTarget.getMeshPoint(CornerPinSurface.BR);
+     qgrid.setCorners(pointTL.x, pointTL.y, pointTR.x, pointTL.y, pointBR.x, pointBR.y, pointBL.x, pointBL.y);
+     qgrid.drawGrid(offscreen, finalisimo);
+     
+     // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
+     offscreen.endShape();
+     offscreen.endDraw();
+     surfaceTarget.render(offscreen);
+     if (millis()>timeout) {
+     mode = MODE_REPOSO;
+     }
+     }*/
+
     noStroke();
     for (int ii = 0; ii<surfaces.size(); ii++) {
+      CornerPinSurface surface = surfaces.get(ii);
       CornerPinSurface surfaceTarget = surfacesTarget.get(ii);
 
       offscreen.beginDraw();
       offscreen.background(0);
       //offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
       // offscreen.fill(0, 255, 0);
-      qgrid.drawGrid(offscreen, finalisimo);
+
+
+      offscreen.noStroke();
+      offscreen.beginShape(QUAD);
+      offscreen.texture(offscreenOrigin);
+
+      MeshPoint pointTL = surface.getMeshPoint(CornerPinSurface.TL);
+      MeshPoint pointTR = surface.getMeshPoint(CornerPinSurface.TR);
+      MeshPoint pointBL = surface.getMeshPoint(CornerPinSurface.BL);
+      MeshPoint pointBR = surface.getMeshPoint(CornerPinSurface.BR);
+
+      offscreen.vertex(0, 0, pointTL.x, pointTL.y);
+      offscreen.vertex(SURFACE_X, 0, pointTR.x, pointTR.y);
+
+      offscreen.vertex(SURFACE_X, SURFACE_Y, pointBR.x, pointBR.y);
+      offscreen.vertex(0, SURFACE_Y, pointBL.x, pointBL.y);
+
 
       // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
       offscreen.endShape();
       offscreen.endDraw();
       surfaceTarget.render(offscreen);
-      if (millis()>timeout) {
-        mode = MODE_REPOSO;
-      }
     }
 
     //QUI METEMOS EL TIMEOUT SI ESTAMOS PINTANDO Y NOHAY MOVIMIENTO
@@ -234,6 +280,12 @@ public void draw() {
     drawReposo();
     if (isMoving && mode != MODE_REPOSO_TEST) {
       mode = MODE_PINTANDO;
+      fill(255);
+    } else {
+      rect(mouseX, mouseY, 60, 60);
+      if (frameCount % 50 == 0) {
+        addPartcilesFromMouse();
+      }
     }
     //MODO REPOSO
   } else {
@@ -255,15 +307,15 @@ public void draw() {
   rect(100, 10, (smoothMovement/10000), 10);
   fill(255);
   text("particulas"+particulas.size()+"\n fps: "+ frameRate, 10, 30);
-  
-  text(""+data.smooth,250, 80);
+
+  text(""+data.smooth, 250, 80);
 }
 
 public void frameDif(PImage video) {
   //video.loadPixels(); // Make its pixels[] array available
   finalisimo.loadPixels();
   // Amount of movement in the frame
-  
+
   lastMovementSum = movementSum;
   movementSum = 0;
   for (int i = 0; i < numPixels; i++) { // For each pixel in the video frame...
@@ -305,7 +357,7 @@ public void frameDif(PImage video) {
   }
 
   finalisimo.updatePixels();
-  
+
   smoothMovement = smoothMovement +(movementSum-smoothMovement)*0.1;
 }
 
@@ -320,26 +372,33 @@ public void addSurface() {
   cornerPinSurface2.x = 100;
   surfacesTarget.add(cornerPinSurface2);
 }
-
-public void mousePressed(){
-   println(mousePressed);
-   int maxParticles= 15;
-   int countparticles = 0;
-    for (Panel p : cosa.getPanels()) {
-      if (p.getCells() != null)
-        for (Cell cell : p.getCells()) {
-          for (int i =0; i<cell.polygon.size(); i++) {
-            Point point = cell.polygon.get(i);
-            PVector vp = new PVector(point.x, point.y);
-            if (PVector.dist(vp, new PVector(mouseX, mouseY)) < 5 && countparticles < maxParticles) {
-              countparticles++;
-              //añadimos nueva partícula
-              println(frameCount+"ñadimos nueva partícula");
-              addParticulas(cell, point, i,0);
-            }
+public void addPartcilesFromMouse()
+{
+  println(mousePressed);
+  int maxParticles= 1;
+ 
+  for (Panel p : cosa.getPanels()) {
+    if (p.getCells() != null)
+      for (Cell cell : p.getCells()) {
+         int countparticles = 0;
+        for (int i =0; i<cell.polygon.size(); i++) {
+          Point point = cell.polygon.get(i);
+          PVector vp = new PVector(point.x, point.y);
+          if (PVector.dist(vp, new PVector(mouseX, mouseY)) < 1050 && countparticles < maxParticles
+          && particulas.size() < 500 ) {
+            countparticles++;
+            //añadimos nueva partícula
+            println(frameCount+"ñadimos nueva partícula");
+            addParticulas(cell, point, i, 0);
           }
         }
-    }
+      }
+  }
+}  
+
+public void mousePressed() {
+  
+  addPartcilesFromMouse();
 }
 
 public void keyPressed() {

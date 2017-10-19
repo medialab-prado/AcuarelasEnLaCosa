@@ -67,13 +67,13 @@ class Particula {
       death = true;
     }
 
-    /* if(move.y < 0 && y < 0){
+     if(move.y <= 0 && y > 0){
      death = true; 
      }
      
-     if(move.y > 0 && y > 0){
+     if(move.y > 0 && y < 0){
      death = true; 
-     }*/
+     }
 
     if (death && !aniadidas) {
       for (Panel p : cosa.getPanels()) {
@@ -84,7 +84,7 @@ class Particula {
               PVector vp = new PVector(point.x, point.y);
               if (PVector.dist(vp, pos) < 5) {
                 //añadimos nueva partícula
-                if (!aniadidas && particulas.size() < 100 && random(10) > 20) {
+                if (!aniadidas && particulas.size() < 200 && random(10) > 40) {
                    addParticulas(cell, point, i,life);
                   aniadidas = true;
                 }
