@@ -84,7 +84,7 @@ class Particula {
               PVector vp = new PVector(point.x, point.y);
               if (PVector.dist(vp, pos) < 5) {
                 //añadimos nueva partícula
-                if (!aniadidas && particulas.size() < 100 && random(10) > 15) {
+                if (!aniadidas && particulas.size() < 100 && random(10) > 20) {
                    addParticulas(cell, point, i,life);
                   aniadidas = true;
                 }
