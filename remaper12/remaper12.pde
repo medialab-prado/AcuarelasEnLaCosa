@@ -66,6 +66,7 @@ PGraphics offscreentarget;
 int MODE_CONFIG = 0;
 int MODE_PINTANDO = 1;
 int MODE_REPOSO = 2;
+int MODE_REPOSO_TEST = 3;
 
 int mode = MODE_CONFIG;
 
@@ -98,7 +99,7 @@ Data data;
 public void setup() {
 
   size(1024, 768, P3D);
-  
+
   data = new Data();
   // Keystone will only BrightnessContrastController with P3D or OPENGL renderers,
   // since it relies on texture mapping to deform
@@ -142,7 +143,7 @@ public void setup() {
 
   previousFrame = new int[640*480];
   finalisimo = createImage(640, 480, RGB);
-  
+
   //estado de reposo
   cosa = new Cosa();
   File pathP = sketchFile("paneles.txt");
@@ -151,7 +152,7 @@ public void setup() {
 
   render = new CosaRender();
   particulas = new ArrayList();
-  
+
   initGUI();
 }
 
@@ -171,7 +172,7 @@ public void draw() {
     cam.read();
     cam.loadPixels();
     bc.destructiveShift(cam, 0, data.contrast);
-    
+
     frameDif(cam);
     bc.destructiveShift(finalisimo, (int)data.brightness, 1);
     //PINTAMOS LA IMAGEN EN EL CANVAS DE ORIGEN
@@ -228,17 +229,17 @@ public void draw() {
     }
 
     //QUI METEMOS EL TIMEOUT SI ESTAMOS PINTANDO Y NOHAY MOVIMIENTO
-  } else if (mode == MODE_REPOSO) {
+  } else if (mode == MODE_REPOSO || mode == MODE_REPOSO_TEST) {
     noStroke();
     drawReposo();
-    if (isMoving) {
+    if (isMoving && mode != MODE_REPOSO_TEST) {
       mode = MODE_PINTANDO;
     }
     //MODO REPOSO
   } else {
     //entramos en error
-    
-    println("ERROR ESTAMOS EN UN ESTADO INCORRECTO");
+
+    println("ERROR ESTAMOS EN UN ESTADO INCORRECTO "+mode);
   }
 
 
@@ -252,7 +253,7 @@ public void draw() {
     fill(255, 0, 0);
   }
   rect(100, 10, abs(smoothMovement-lastMovementSum)/1000.0, 10);
-  
+
   text("particulas"+particulas.size()+"\n fps: "+ frameRate, 10, 30);
 }
 
@@ -283,7 +284,7 @@ public void frameDif(PImage video) {
     float finalG = green(finalisimo.pixels[i]);
     float finalB = blue(finalisimo.pixels[i]);
 
-   
+
     finalR = finalR + (currR - finalR)*data.smooth;
     finalG = finalG + (currG - finalG)*data.smooth;
     finalB = finalB + (currB - finalB)*data.smooth;
@@ -304,6 +305,18 @@ public void frameDif(PImage video) {
   finalisimo.updatePixels();
 }
 
+public void addSurface() {
+
+  CornerPinSurface cornerPinSurface = ks.createCornerPinSurface(SURFACE_X, SURFACE_Y, 10);
+  cornerPinSurface.setGridColor(color(255, 0, 0));
+  surfaces.add(cornerPinSurface);
+
+  CornerPinSurface cornerPinSurface2 = ksTarget.createCornerPinSurface(SURFACE_X, SURFACE_Y, 10);
+  cornerPinSurface2.setGridColor(color(255, 0, 0));
+  cornerPinSurface2.x = 100;
+  surfacesTarget.add(cornerPinSurface2);
+}
+
 
 public void keyPressed() {
   switch (key) {
@@ -316,6 +329,22 @@ public void keyPressed() {
 
   case 'l':
     // loads the saved layout
+
+    XML xml = loadXML("origin.xml");
+    println("xkml"+xml.getChildCount());
+    XML[] children = xml.getChildren();
+    int count = 0;
+    for (int i = 0; i < children.length; i++) {
+      if (children[i].getName().equals("surface")) {
+        count++;
+      }
+    }
+
+    if (surfacesTarget.size()<count)
+      for (int i = surfacesTarget.size(); i<count; i++) {
+        addSurface();
+      }
+
     ks.load("origin.xml");
     ksTarget.load("target.xml");
     break;
@@ -345,14 +374,7 @@ public void keyPressed() {
     break;
   case '+':
     // saves the layout
-    CornerPinSurface cornerPinSurface = ks.createCornerPinSurface(SURFACE_X, SURFACE_Y, 10);
-    cornerPinSurface.setGridColor(color(255, 0, 0));
-    surfaces.add(cornerPinSurface);
-
-    CornerPinSurface cornerPinSurface2 = ksTarget.createCornerPinSurface(SURFACE_X, SURFACE_Y, 10);
-    cornerPinSurface2.setGridColor(color(255, 0, 0));
-    cornerPinSurface2.x = 100;
-    surfacesTarget.add(cornerPinSurface2);
+    addSurface();
     break;
   case '-':
     // saves the layout
