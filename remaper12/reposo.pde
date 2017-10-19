@@ -14,7 +14,8 @@ public void drawReposo() {
  // println("redner");
   for (int i = 0; i<particulas.size(); i++) {
     Particula p = particulas.get(i);
-    if (!p.move()) {
+    p.move();    
+    if (p.death) {
       particulasParaBorrar.add(p);
     }
 
@@ -23,22 +24,8 @@ public void drawReposo() {
   //println("añadiendo particulas");
   particulas.removeAll(particulasParaBorrar);
 
-  if (mousePressed && frameCount % 10 == 0) {
-    println(mousePressed);
-    for (Panel p : cosa.getPanels()) {
-      if (p.getCells() != null)
-        for (Cell cell : p.getCells()) {
-          for (int i =0; i<cell.polygon.size(); i++) {
-            Point point = cell.polygon.get(i);
-            PVector vp = new PVector(point.x, point.y);
-            if (PVector.dist(vp, new PVector(mouseX, mouseY)) < 15) {
-              //añadimos nueva partícula
-              println(frameCount+"ñadimos nueva partícula");
-              addParticulas(cell, point, i,0);
-            }
-          }
-        }
-    }
+  if (mousePressed && frameCount % 20 == 0) {
+   
   }
 }
 
