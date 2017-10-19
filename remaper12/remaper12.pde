@@ -183,8 +183,8 @@ public void draw() {
 
 
   boolean isMoving = false;
-  float vx = abs(smoothMovement-lastMovementSum);
-  if (vx > 50000) {
+  float vx = smoothMovement/10000;
+  if (vx > data.threshold) {
     isMoving = true;
   } 
 
@@ -243,7 +243,7 @@ public void draw() {
   }
 
 
-  text("movement"+vx, 10, 10);
+  text("movement"+(smoothMovement/10000), 10, 10);
   //si detectamos una variación en la cantidad de movimiento de más de x
   //pasamos al estado de juego
   if (isMoving) {
@@ -252,7 +252,7 @@ public void draw() {
   } else {
     fill(255, 0, 0);
   }
-  rect(100, 10, abs(smoothMovement-lastMovementSum)/1000.0, 10);
+  rect(100, 10, (smoothMovement/10000), 10);
 
   text("particulas"+particulas.size()+"\n fps: "+ frameRate, 10, 30);
 }
@@ -261,8 +261,8 @@ public void frameDif(PImage video) {
   //video.loadPixels(); // Make its pixels[] array available
   finalisimo.loadPixels();
   // Amount of movement in the frame
-  lastMovementSum = smoothMovement;
-  smoothMovement = smoothMovement +(movementSum-smoothMovement)*0.1;
+  
+  lastMovementSum = movementSum;
   movementSum = 0;
   for (int i = 0; i < numPixels; i++) { // For each pixel in the video frame...
     color currColor = video.pixels[i];
@@ -303,6 +303,8 @@ public void frameDif(PImage video) {
   }
 
   finalisimo.updatePixels();
+  
+  smoothMovement = smoothMovement +(movementSum-smoothMovement)*0.1;
 }
 
 public void addSurface() {

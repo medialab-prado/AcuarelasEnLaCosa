@@ -1,8 +1,9 @@
 
 public class Data {
-  float brightness = 0;
+  float brightness = 1;
   float contrast= 1;
   float smooth = 0.05;
+  float threshold = 500;
 }
 
 RadioButton r1;
@@ -14,7 +15,7 @@ public void initGUI() {
     .setPosition(200, 30)
     .setSize(200, 20)
     .setRange(0, 10)
-    .setValue(1)
+    .setValue(data.brightness)
     .setId(1)
     ;
 
@@ -22,7 +23,7 @@ public void initGUI() {
     .setPosition(200, 50)
     .setSize(200, 20)
     .setRange(0, 4)
-    .setValue(1)
+    .setValue(data.contrast)
     .setId(2)
     ;
 
@@ -30,8 +31,17 @@ public void initGUI() {
     .setPosition(200, 80)
     .setSize(200, 20)
     .setRange(0, 1)
-    .setValue(1)
+    .setValue(data.smooth)
     .setId(3)
+    ;
+    
+    
+    cp5.addSlider("threshold")
+    .setPosition(600, 80)
+    .setSize(200, 20)
+    .setRange(100, 1000)
+    .setValue(data.threshold)
+    .setId(4)
     ;
 
   r1 = cp5.addRadioButton("MODOS")
@@ -66,6 +76,9 @@ void controlEvent(ControlEvent theEvent) {
       break;
       case(3):
       data. smooth = theEvent.getController().getValue();
+      break;
+       case(4):
+      data. threshold = theEvent.getController().getValue();
       break;
       
     }
