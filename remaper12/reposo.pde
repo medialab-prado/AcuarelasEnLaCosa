@@ -26,7 +26,8 @@ public void drawReposo() {
 
     if (id >= 180 && id <= 290
       || id >= 41 && id <= 71
-      || id >= 330 && id <= 351) {
+      || id >= 330 && id <= 351
+      || id >= 110 && id <= 131) {
       //  if (true) {
       rect(p.x+p.width-index, p.y, lineWidth, p.height);
     } else {

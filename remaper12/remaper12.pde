@@ -89,6 +89,7 @@ Cosa cosa;
 CosaRender render;
 Cell lastCell;
 List<Particula> particulas;
+PShape shape;
 List<PVector> vertices;
 private float[] indicePanels;
 
@@ -154,6 +155,9 @@ public void setup() {
   cosa.init(pathP, pathC);
   
   indicePanels = new float[cosa.getPanels().size()];
+ // shape = createShape(POINTS);
+  
+  
 
   render = new CosaRender();
   particulas = new ArrayList();
@@ -270,6 +274,10 @@ public void draw() {
 
       // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
       offscreen.endShape();
+      
+           qgrid.setCorners(pointTL.x, pointTL.y, pointTR.x, pointTL.y, pointBR.x, pointBR.y, pointBL.x, pointBL.y);
+     qgrid.drawGrid(offscreen, offscreenOrigin);
+     
       offscreen.endDraw();
       surfaceTarget.render(offscreen);
     }
@@ -293,7 +301,8 @@ public void draw() {
 
     println("ERROR ESTAMOS EN UN ESTADO INCORRECTO "+mode);
   }
-
+  fill(0);
+rect(10,10,width,100);
 
   text("movement"+(smoothMovement/10000), 10, 10);
   //si detectamos una variación en la cantidad de movimiento de más de x
