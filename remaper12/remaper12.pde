@@ -84,14 +84,7 @@ int movementSum = 0;
 float lastMovementSum = 0;
 float smoothMovement = 0;
 
-//REPOSO
-Cosa cosa;
-CosaRender render;
-Cell lastCell;
-List<Particula> particulas;
-PShape shape;
-List<PVector> vertices;
-private float[] indicePanels;
+Particulas pp = new Particulas();
 
 //GUI
 ControlP5 cp5;
@@ -123,7 +116,7 @@ public void setup() {
     }
   }      
 
-  cam = new Capture(this, cameras[1]);
+  cam = new Capture(this, 640,480);
   //cam.start();     
   // cam = new IPCapture(this, "http://192.168.3.81:8080/?action=stream", "", "");
   cam.start();
@@ -148,21 +141,10 @@ public void setup() {
   previousFrame = new int[640*480];
   finalisimo = createImage(640, 480, RGB);
 
-  //estado de reposo
-  cosa = new Cosa();
-  File pathP = sketchFile("paneles.txt");
-  File pathC = sketchFile("CoordCeldas.txt");
-  cosa.init(pathP, pathC);
-  
-  indicePanels = new float[cosa.getPanels().size()];
- // shape = createShape(POINTS);
-  
-  
-
-  render = new CosaRender();
-  particulas = new ArrayList();
+  pp.init();
 
   initGUI();
+  frameRate(25);
 }
 
 
@@ -315,7 +297,7 @@ rect(10,10,width,100);
   }
   rect(100, 10, (smoothMovement/10000), 10);
   fill(255);
-  text("particulas"+particulas.size()+"\n fps: "+ frameRate, 10, 30);
+  text("particulas"+pp.particulas.size()+"\n fps: "+ frameRate, 10, 30);
 
   text(""+data.smooth, 250, 80);
 }
@@ -386,7 +368,7 @@ public void addPartcilesFromMouse()
   println(mousePressed);
   int maxParticles= 1;
  
-  for (Panel p : cosa.getPanels()) {
+  for (Panel p : pp.cosa.getPanels()) {
     if (p.getCells() != null)
       for (Cell cell : p.getCells()) {
          int countparticles = 0;
@@ -394,11 +376,11 @@ public void addPartcilesFromMouse()
           Point point = cell.polygon.get(i);
           PVector vp = new PVector(point.x, point.y);
           if (PVector.dist(vp, new PVector(mouseX, mouseY)) < 1050 && countparticles < maxParticles
-          && particulas.size() < 500 ) {
+          && pp.particulas.size() < 500 ) {
             countparticles++;
             //añadimos nueva partícula
             println(frameCount+"ñadimos nueva partícula");
-            addParticulas(cell, point, i, 0);
+            pp.addParticulas(cell, point, i, 0);
           }
         }
       }
