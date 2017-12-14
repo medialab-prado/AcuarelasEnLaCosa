@@ -24,7 +24,7 @@ import processing.video.*;
 
 
 
-//import ipcapture.*;
+import ipcapture.*;
 import java.util.ArrayList;
 import java.util.List;
 import deadpixel.keystone.remaper.CornerPinSurface;
@@ -40,8 +40,8 @@ import org.mlp.cosa.Panels;
 import java.util.*;
 import controlP5.*;
 
-Capture cam;
-//IPCapture cam;
+Capture cam2;
+IPCapture cam;
 PImage previo;
 PImage finalisimo;
 PImage bg;
@@ -84,7 +84,7 @@ int movementSum = 0;
 float lastMovementSum = 0;
 float smoothMovement = 0;
 
-Particulas pp = new Particulas();
+ParticulaSystem pp = new ParticulaSystem();
 
 //GUI
 ControlP5 cp5;
@@ -94,8 +94,8 @@ Data data;
 public void setup() {
 
   size(1024, 768, P3D);
-  
-  
+
+
 
   data = new Data();
   // Keystone will only BrightnessContrastController with P3D or OPENGL renderers,
@@ -116,9 +116,9 @@ public void setup() {
     }
   }      
 
-  cam = new Capture(this, 640,480);
+  //cam = new Capture(this, 640, 480);
   //cam.start();     
-  // cam = new IPCapture(this, "http://192.168.3.81:8080/?action=stream", "", "");
+  cam = new IPCapture(this, "http://192.168.1.52:8080/?action=stream", "", "");
   cam.start();
 
   //PLANTILLA FINAL
@@ -144,21 +144,18 @@ public void setup() {
   pp.init();
 
   initGUI();
-  frameRate(25);
+  frameRate(30);
 }
 
 
 public void draw() {
 
-
-
-
   //CAMARA INICIO
-  if (cam.available()) {
-    // cam.read();
-    //   }
-    //  offscreenOrigin.image(cam, 0, 0);
-    //if (cam.isAvailable()) {
+  //if (cam.available()) {
+  // cam.read();
+  //   }
+  //  offscreenOrigin.image(cam, 0, 0);
+  if (cam.isAvailable()) {
     //ACTUALIZAMOS CAMARA SI ES POSIBLE
     cam.read();
     cam.loadPixels();
@@ -183,7 +180,7 @@ public void draw() {
   if (mode == MODE_CONFIG) {
 
     //IMPORTANTE meter dentro imagen la variable cam que es como se llama la capturacion de pantalla      
-
+      background(0);
     image(finalisimo, 0, 0, 1024, 768);
     // image(finalisimo, 0, 0, 1024*0.2, 768*0.2);
     for (CornerPinSurface surface : surfaces) {
@@ -200,7 +197,15 @@ public void draw() {
       i++;
     }
   } else if (mode == MODE_PINTANDO) {
-      background(bg);
+    background(bg);
+    
+     pp.drawParticles();
+         rect(mouseX, mouseY, 60, 60);
+      if (frameCount % 50 == 0) {
+        pp.addPartcilesFromMouse();
+      }
+    
+
     /* noStroke();
      for (int ii = 0; ii<surfaces.size(); ii++) {
      CornerPinSurface surfaceTarget = surfaces.get(ii);
@@ -256,10 +261,10 @@ public void draw() {
 
       // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
       offscreen.endShape();
-      
-           qgrid.setCorners(pointTL.x, pointTL.y, pointTR.x, pointTL.y, pointBR.x, pointBR.y, pointBL.x, pointBL.y);
-     qgrid.drawGrid(offscreen, offscreenOrigin);
-     
+
+      qgrid.setCorners(pointTL.x, pointTL.y, pointTR.x, pointTL.y, pointBR.x, pointBR.y, pointBL.x, pointBL.y);
+      //qgrid.drawGrid(offscreen, offscreenOrigin);
+
       offscreen.endDraw();
       surfaceTarget.render(offscreen);
     }
@@ -267,14 +272,14 @@ public void draw() {
     //QUI METEMOS EL TIMEOUT SI ESTAMOS PINTANDO Y NOHAY MOVIMIENTO
   } else if (mode == MODE_REPOSO || mode == MODE_REPOSO_TEST) {
     noStroke();
-    drawReposo();
+    pp.drawParticles();
     if (isMoving && mode != MODE_REPOSO_TEST) {
       mode = MODE_PINTANDO;
       fill(255);
     } else {
       rect(mouseX, mouseY, 60, 60);
       if (frameCount % 50 == 0) {
-        addPartcilesFromMouse();
+        pp.addPartcilesFromMouse();
       }
     }
     //MODO REPOSO
@@ -284,7 +289,7 @@ public void draw() {
     println("ERROR ESTAMOS EN UN ESTADO INCORRECTO "+mode);
   }
   fill(0);
-rect(10,10,width,100);
+  rect(10, 10, width, 100);
 
   text("movement"+(smoothMovement/10000), 10, 10);
   //si detectamos una variación en la cantidad de movimiento de más de x
@@ -363,33 +368,10 @@ public void addSurface() {
   cornerPinSurface2.x = 100;
   surfacesTarget.add(cornerPinSurface2);
 }
-public void addPartcilesFromMouse()
-{
-  println(mousePressed);
-  int maxParticles= 1;
- 
-  for (Panel p : pp.cosa.getPanels()) {
-    if (p.getCells() != null)
-      for (Cell cell : p.getCells()) {
-         int countparticles = 0;
-        for (int i =0; i<cell.polygon.size(); i++) {
-          Point point = cell.polygon.get(i);
-          PVector vp = new PVector(point.x, point.y);
-          if (PVector.dist(vp, new PVector(mouseX, mouseY)) < 1050 && countparticles < maxParticles
-          && pp.particulas.size() < 500 ) {
-            countparticles++;
-            //añadimos nueva partícula
-            println(frameCount+"ñadimos nueva partícula");
-            pp.addParticulas(cell, point, i, 0);
-          }
-        }
-      }
-  }
-}  
 
 public void mousePressed() {
-  
-  addPartcilesFromMouse();
+
+  pp.addPartcilesFromMouse();
 }
 
 public void keyPressed() {

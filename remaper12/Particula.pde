@@ -1,5 +1,4 @@
-class Particulas {
-
+class ParticulaSystem {
 
   //REPOSO
   Cosa cosa;
@@ -22,6 +21,29 @@ class Particulas {
     render = new CosaRender();
     particulas = new ArrayList();
   }
+public void addPartcilesFromMouse()
+{
+  println(mousePressed);
+  int maxParticles= 1;
+
+  for (Panel p : pp.cosa.getPanels()) {
+    if (p.getCells() != null)
+      for (Cell cell : p.getCells()) {
+        int countparticles = 0;
+        for (int i =0; i<cell.polygon.size(); i++) {
+          Point point = cell.polygon.get(i);
+          PVector vp = new PVector(point.x, point.y);
+          if (PVector.dist(vp, new PVector(mouseX, mouseY)) < 1050 && countparticles < maxParticles
+            && pp.particulas.size() < 500 ) {
+            countparticles++;
+            //añadimos nueva partícula
+            println(frameCount+"ñadimos nueva partícula");
+            pp.addParticulas(cell, point, i, 0);
+          }
+        }
+      }
+  }
+}  
 
 
   public void addParticulas(Cell cell, Point point, int i, int old) {
@@ -75,12 +97,69 @@ class Particulas {
     // particula2.life = old;
     // particulas.add(particula2);
   }
+
+  public void drawParticles() {
+
+    // background(100,20);
+    fill(0, 10);
+    rect(0, 0, width, height);
+    fill(255);
+
+    noStroke();
+    int i = 0;
+    int lineWidth = 5;
+    float vel = 35;
+    for (Panel p : pp.cosa.getPanels()) {
+      float index = pp.indicePanels[i];
+      fill(50, 0, 50, 20);
+      rect(p.x, p.y, p.width, p.height);
+
+      int id = Integer.parseInt(p.name.substring(1));
+      fill(0, 255, 150);
+
+      if (id >= 180 && id <= 290
+        || id >= 41 && id <= 71
+        || id >= 330 && id <= 351
+        || id >= 110 && id <= 131) {
+        //  if (true) {
+        rect(p.x+p.width-index, p.y, lineWidth, p.height);
+      } else {
+
+        rect(p.x+index, p.y, lineWidth, p.height);
+      }
+      if (frameCount % 2== 0)
+        index+=(p.width)/vel;
+
+      if (index > p.width)
+        index = 0;
+
+      pp. indicePanels[i] = index;
+      i++;
+    }
+
+    List<Particula> particulasParaBorrar = new ArrayList();
+    // println("redner");
+    for (int ii = 0; ii<pp.particulas.size(); ii++) {
+      Particula p =pp. particulas.get(ii);
+      p.move();    
+      if (p.death) {
+        particulasParaBorrar.add(p);
+      }
+
+      p.render(g);
+    }
+    //println("añadiendo particulas");
+    pp. particulas.removeAll(particulasParaBorrar);
+
+    if (mousePressed && frameCount % 20 == 0) {
+    }
+  }
 }
 
 
 class Particula {
 
-  Particulas pp;
+  ParticulaSystem pp;
 
   PVector pos;
   PVector end;
@@ -91,7 +170,7 @@ class Particula {
   boolean aniadidas = false;
   boolean death = false;
 
-  public void init(Particulas pp, PVector pos, PVector end, PVector move, color c) {
+  public void init(ParticulaSystem pp, PVector pos, PVector end, PVector move, color c) {
     this.pos = pos;
     this.move = move;
     this.end =  end;
