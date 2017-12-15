@@ -5,6 +5,7 @@ public class Data {
   float smooth = 0.05;
   float threshold = 500;
   boolean localCamera = true;
+  int currentSurface = 0;
 }
 
 RadioButton r1;

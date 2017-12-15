@@ -91,7 +91,7 @@ ParticulaSystem pp = new ParticulaSystem();
 ControlP5 cp5;
 
 Data data;
- boolean readed = false;
+boolean readed = false;
 public void setup() {
 
   size(1024, 768, P3D);
@@ -155,14 +155,13 @@ public void draw() {
 
   //CAMARA INICIO
   PImage filteredCam = null;
- 
+
   if (data.localCamera) {
     if (cam2.available()) {
       cam2.read();
       readed = true;
       filteredCam = cv.process(cam2);
       //filteredCam = cam2;
-     
     }
     //  offscreenOrigin.image(cam, 0, 0);
 
@@ -172,21 +171,19 @@ public void draw() {
     if (cam.isAvailable()) {
       //ACTUALIZAMOS CAMARA SI ES POSIBLE
       cam.read();
-       readed = true;
+      readed = true;
       filteredCam = cv.process(cam);
     }
   } 
 
   if (readed && filteredCam != null) {
     filteredCam.loadPixels();
-   finalisimo = frameDif(filteredCam);
+    finalisimo = frameDif(filteredCam);
     // bc.destructiveShift(finalisimo, (int)data.brightness, 1);
     //PINTAMOS LA IMAGEN EN EL CANVAS DE ORIGEN
     offscreenOrigin.beginDraw();
     offscreenOrigin.image(finalisimo, 0, 0, 1024, 768);
     offscreenOrigin.endDraw();
-    
-    
   }
   boolean isMoving = false;
   float vx = smoothMovement/10000;
@@ -202,28 +199,30 @@ public void draw() {
     image(finalisimo, 0, 0, 1024, 768);
     // image(finalisimo, 0, 0, 1024*0.2, 768*0.2);
     for (CornerPinSurface surface : surfaces) {
-
-      // render the scene, transformed using the corner pin surface
-      surface.render(offscreen);
-      // Draw the scene, offscreen
-      offscreen.beginDraw();
-      offscreen.background(255, 0);
-      offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
-      // offscreen.fill(0, 255, 0);
-      // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
-      offscreen.endDraw();
+      if ( data.currentSurface == 0 ||  data.currentSurface == i) {
+        // render the scene, transformed using the corner pin surface
+        surface.render(offscreen);
+        // Draw the scene, offscreen
+        offscreen.beginDraw();
+        offscreen.background(255, 0);
+        offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
+        // offscreen.fill(0, 255, 0);
+        // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
+        offscreen.endDraw();
+      }
       i++;
     }
   } else if (mode == MODE_PINTANDO) {
     background(bg);
-
+    pushStyle();
     pp.drawParticles();
+
     rect(mouseX, mouseY, 60, 60);
     if (frameCount % 50 == 0) {
       pp.addPartcilesFromMouse();
     }
 
-
+    popStyle();
     /* noStroke();
      for (int ii = 0; ii<surfaces.size(); ii++) {
      CornerPinSurface surfaceTarget = surfaces.get(ii);
@@ -252,39 +251,73 @@ public void draw() {
 
     noStroke();
     for (int ii = 0; ii<surfaces.size(); ii++) {
-      CornerPinSurface surface = surfaces.get(ii);
-      CornerPinSurface surfaceTarget = surfacesTarget.get(ii);
+      if ( data.currentSurface == 0 ||  data.currentSurface == ii) {
+        CornerPinSurface surface = surfaces.get(ii);
+        CornerPinSurface surfaceTarget = surfacesTarget.get(ii);
 
-      offscreen.beginDraw();
-      offscreen.background(0);
-      //offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
-      // offscreen.fill(0, 255, 0);
+        offscreen.beginDraw();
+        offscreen.background(0, 100);
+        //offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
+        // offscreen.fill(0, 255, 0);
+        if (ksTarget.isCalibrating())
+          offscreen.tint(255, 100);
+        else
+          offscreen.noTint();
+        offscreen.noStroke();
+        offscreen.beginShape(QUAD);
+        offscreen.texture(offscreenOrigin);
 
+        int size = 1;
+        int sizeGrid = 10;
+        int scale = sizeGrid / size;
 
-      offscreen.noStroke();
-      offscreen.beginShape(QUAD);
-      offscreen.texture(offscreenOrigin);
+        for (int xxx = 0; xxx< size; xxx++) {
+          for (int yyy = 0; yyy< size; yyy++) {
 
-      MeshPoint pointTL = surface.getMeshPoint(CornerPinSurface.TL);
-      MeshPoint pointTR = surface.getMeshPoint(CornerPinSurface.TR);
-      MeshPoint pointBL = surface.getMeshPoint(CornerPinSurface.BL);
-      MeshPoint pointBR = surface.getMeshPoint(CornerPinSurface.BR);
+            int xstep = SURFACE_X/size;
+            int ystep = SURFACE_Y/size;
 
-      offscreen.vertex(0, 0, pointTL.x, pointTL.y);
-      offscreen.vertex(SURFACE_X, 0, pointTR.x, pointTR.y);
+            int xo = xstep*xxx;
+            int yo = ystep*yyy;
+            
+            int tlindex = xxx*scale;
+            int trindex = (xxx+1)*scale;
+            int blindex = xxx*scale+yyy*size*scale;
+            int brindex = (xxx+1)*(size)+yyy*scale;
+            
+            println(tlindex+" "+CornerPinSurface.TL);
+            println(trindex+" "+CornerPinSurface.TR);
+            println(blindex+" "+CornerPinSurface.BL);
+            println(brindex+" "+CornerPinSurface.BR);
+            println();
 
-      offscreen.vertex(SURFACE_X, SURFACE_Y, pointBR.x, pointBR.y);
-      offscreen.vertex(0, SURFACE_Y, pointBL.x, pointBL.y);
+            MeshPoint pointTL = surface.getMeshPoint(tlindex);
+            MeshPoint pointTR = surface.getMeshPoint(trindex);
+            MeshPoint pointBL = surface.getMeshPoint(blindex);
+            MeshPoint pointBR = surface.getMeshPoint(brindex);
 
+            /*     MeshPoint pointTL = surface.getMeshPoint(CornerPinSurface.TL);
+             MeshPoint pointTR = surface.getMeshPoint(CornerPinSurface.TR);
+             MeshPoint pointBL = surface.getMeshPoint(CornerPinSurface.BL);
+             MeshPoint pointBR = surface.getMeshPoint(CornerPinSurface.BR);
+             */
+            offscreen.vertex(xo, yo, pointTL.x, pointTL.y);
+            offscreen.vertex(xo+xstep, yo, pointTR.x, pointTR.y);
 
-      // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
-      offscreen.endShape();
+            offscreen.vertex(xo+xstep, yo+ystep, pointBR.x, pointBR.y);
+            offscreen.vertex(xo, yo+ystep, pointBL.x, pointBL.y);
+          }
+        }
 
-      qgrid.setCorners(pointTL.x, pointTL.y, pointTR.x, pointTL.y, pointBR.x, pointBR.y, pointBL.x, pointBL.y);
-      //qgrid.drawGrid(offscreen, offscreenOrigin);
+        // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
+        offscreen.endShape();
 
-      offscreen.endDraw();
-      surfaceTarget.render(offscreen);
+        // qgrid.setCorners(pointTL.x, pointTL.y, pointTR.x, pointTL.y, pointBR.x, pointBR.y, pointBL.x, pointBL.y);
+        //qgrid.drawGrid(offscreen, offscreenOrigin);
+
+        offscreen.endDraw();
+        surfaceTarget.render(offscreen);
+      }
     }
 
     //QUI METEMOS EL TIMEOUT SI ESTAMOS PINTANDO Y NOHAY MOVIMIENTO
@@ -308,7 +341,7 @@ public void draw() {
   }
   fill(0);
   rect(10, 10, width, 100);
-  
+
   text("movement"+(smoothMovement/10000), 10, 10);
   //si detectamos una variación en la cantidad de movimiento de más de x
   //pasamos al estado de juego
@@ -401,6 +434,7 @@ public void keyPressed() {
     // and moved
     ks.toggleCalibration();
     ksTarget.toggleCalibration();
+    data.currentSurface = 0;
     break;
 
   case 'l':
@@ -455,6 +489,13 @@ public void keyPressed() {
   case '-':
     // saves the layout
     //  ks.save();
+    break;
+  case 'n':
+    // saves the layout
+    //  ks.save();
+    data.currentSurface++;
+    if (data.currentSurface >= surfaces.size())
+      data.currentSurface = 0;
     break;
   }
 }

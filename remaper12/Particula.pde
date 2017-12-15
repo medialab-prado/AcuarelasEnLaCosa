@@ -266,7 +266,8 @@ class Particula {
     canvas.strokeWeight(3);
     canvas.fill(c);
     canvas.point(pos.x, pos.y);
-    float xdif = PVector.sub(end, pos).x;
+     canvas.strokeWeight(1);
+    //float xdif = PVector.sub(end, pos).x;
     // canvas.text(death+":xvel:"+move.x+" xdif:"+xdif, pos.x, pos.y);
   }
 }

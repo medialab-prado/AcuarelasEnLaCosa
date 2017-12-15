@@ -23,7 +23,7 @@ public class ContrastVibrance {
   public void init(PApplet parent) {
 
     shader = parent.loadShader("saturationVibranceFrag.glsl");
-    target = parent.createGraphics(1024,768,P2D);
+    target = parent.createGraphics(640,480,P2D);
 
   }
 
@@ -37,7 +37,7 @@ public class ContrastVibrance {
   public PImage process(PImage src) {
 
     shader.set("vibrance", data.brightness);
-    shader.set("contrast", data.contrast);
+    shader.set("saturation", data.contrast);
     // 3. Draw destination buffer
     target.beginDraw();
     target.shader(shader);
