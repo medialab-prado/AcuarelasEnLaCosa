@@ -282,8 +282,8 @@ public void draw() {
             
             int tlindex = xxx*scale;
             int trindex = (xxx+1)*scale;
-            int blindex = xxx*scale+yyy*size*scale;
-            int brindex = (xxx+1)*(size)+yyy*scale;
+            int blindex = (xxx+1)*scale+(yyy+1)*size*scale*scale;
+            int brindex = (xxx+1)*scale+(yyy+1)*size*scale*scale + size/scale;
             
             println(tlindex+" "+CornerPinSurface.TL);
             println(trindex+" "+CornerPinSurface.TR);
