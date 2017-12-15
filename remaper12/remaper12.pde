@@ -75,6 +75,7 @@ int TIMEOUT_TIME = 60 * 1000; //60 segundos
 
 //controld e brillo
 BrightnessContrastController bc;
+ContrastVibrance cv;
 
 //FILTR DE VIDEO
 int numPixels;
@@ -90,17 +91,17 @@ ParticulaSystem pp = new ParticulaSystem();
 ControlP5 cp5;
 
 Data data;
-
+ boolean readed = false;
 public void setup() {
 
   size(1024, 768, P3D);
-
-
 
   data = new Data();
   // Keystone will only BrightnessContrastController with P3D or OPENGL renderers,
   // since it relies on texture mapping to deform
   bc=new BrightnessContrastController();
+  cv = new ContrastVibrance();
+  cv.init(this);
 
   numPixels = 640*480;
   //CAMARA INICIO
@@ -116,8 +117,10 @@ public void setup() {
     }
   }      
 
-  //cam = new Capture(this, 640, 480);
-  //cam.start();     
+  if (data.localCamera) {
+    cam2 = new Capture(this, 640, 480);
+    cam2.start();
+  }
   cam = new IPCapture(this, "http://192.168.1.52:8080/?action=stream", "", "");
   cam.start();
 
@@ -151,25 +154,40 @@ public void setup() {
 public void draw() {
 
   //CAMARA INICIO
-  //if (cam.available()) {
-  // cam.read();
-  //   }
-  //  offscreenOrigin.image(cam, 0, 0);
-  if (cam.isAvailable()) {
-    //ACTUALIZAMOS CAMARA SI ES POSIBLE
-    cam.read();
-    cam.loadPixels();
-    bc.destructiveShift(cam, 0, data.contrast);
+  PImage filteredCam = null;
+ 
+  if (data.localCamera) {
+    if (cam2.available()) {
+      cam2.read();
+      readed = true;
+      filteredCam = cv.process(cam2);
+      //filteredCam = cam2;
+     
+    }
+    //  offscreenOrigin.image(cam, 0, 0);
 
-    frameDif(cam);
-    bc.destructiveShift(finalisimo, (int)data.brightness, 1);
+    // cam.loadPixels();
+    //bc.destructiveShift(cam, 0, data.contrast
+  } else {
+    if (cam.isAvailable()) {
+      //ACTUALIZAMOS CAMARA SI ES POSIBLE
+      cam.read();
+       readed = true;
+      filteredCam = cv.process(cam);
+    }
+  } 
+
+  if (readed && filteredCam != null) {
+    filteredCam.loadPixels();
+   finalisimo = frameDif(filteredCam);
+    // bc.destructiveShift(finalisimo, (int)data.brightness, 1);
     //PINTAMOS LA IMAGEN EN EL CANVAS DE ORIGEN
     offscreenOrigin.beginDraw();
     offscreenOrigin.image(finalisimo, 0, 0, 1024, 768);
     offscreenOrigin.endDraw();
-  } 
-
-
+    
+    
+  }
   boolean isMoving = false;
   float vx = smoothMovement/10000;
   if (vx > data.threshold) {
@@ -180,7 +198,7 @@ public void draw() {
   if (mode == MODE_CONFIG) {
 
     //IMPORTANTE meter dentro imagen la variable cam que es como se llama la capturacion de pantalla      
-      background(0);
+    background(0);
     image(finalisimo, 0, 0, 1024, 768);
     // image(finalisimo, 0, 0, 1024*0.2, 768*0.2);
     for (CornerPinSurface surface : surfaces) {
@@ -198,13 +216,13 @@ public void draw() {
     }
   } else if (mode == MODE_PINTANDO) {
     background(bg);
-    
-     pp.drawParticles();
-         rect(mouseX, mouseY, 60, 60);
-      if (frameCount % 50 == 0) {
-        pp.addPartcilesFromMouse();
-      }
-    
+
+    pp.drawParticles();
+    rect(mouseX, mouseY, 60, 60);
+    if (frameCount % 50 == 0) {
+      pp.addPartcilesFromMouse();
+    }
+
 
     /* noStroke();
      for (int ii = 0; ii<surfaces.size(); ii++) {
@@ -290,7 +308,7 @@ public void draw() {
   }
   fill(0);
   rect(10, 10, width, 100);
-
+  
   text("movement"+(smoothMovement/10000), 10, 10);
   //si detectamos una variación en la cantidad de movimiento de más de x
   //pasamos al estado de juego
@@ -307,7 +325,7 @@ public void draw() {
   text(""+data.smooth, 250, 80);
 }
 
-public void frameDif(PImage video) {
+public PImage frameDif(PImage video) {
   //video.loadPixels(); // Make its pixels[] array available
   finalisimo.loadPixels();
   // Amount of movement in the frame
@@ -355,6 +373,8 @@ public void frameDif(PImage video) {
   finalisimo.updatePixels();
 
   smoothMovement = smoothMovement +(movementSum-smoothMovement)*0.1;
+
+  return finalisimo;
 }
 
 public void addSurface() {

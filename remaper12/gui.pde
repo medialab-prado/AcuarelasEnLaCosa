@@ -4,6 +4,7 @@ public class Data {
   float contrast= 1;
   float smooth = 0.05;
   float threshold = 500;
+  boolean localCamera = true;
 }
 
 RadioButton r1;
