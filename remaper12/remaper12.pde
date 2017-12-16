@@ -92,6 +92,9 @@ ControlP5 cp5;
 
 Data data;
 boolean readed = false;
+
+int pointSelected = 0;
+
 public void setup() {
 
   size(1024, 768, P3D);
@@ -255,21 +258,27 @@ public void draw() {
         CornerPinSurface surface = surfaces.get(ii);
         CornerPinSurface surfaceTarget = surfacesTarget.get(ii);
 
+        surface.setGridColor(color(255, 0, 0, 50));
+        surfaceTarget.setGridColor(color(255, 0, 0, 50));
         offscreen.beginDraw();
         offscreen.background(0, 100);
         //offscreen.text("" + i, offscreen.width / 2, offscreen.height / 2);
         // offscreen.fill(0, 255, 0);
-        if (ksTarget.isCalibrating())
+        if (ksTarget.isCalibrating()) {
           offscreen.tint(255, 100);
-        else
+        } else {
           offscreen.noTint();
+        }
+
+
         offscreen.noStroke();
         offscreen.beginShape(QUAD);
         offscreen.texture(offscreenOrigin);
 
-        int size = 1;
+         int size = 10;
         int sizeGrid = 10;
         int scale = sizeGrid / size;
+        //  println("-------------------");
 
         for (int xxx = 0; xxx< size; xxx++) {
           for (int yyy = 0; yyy< size; yyy++) {
@@ -279,17 +288,26 @@ public void draw() {
 
             int xo = xstep*xxx;
             int yo = ystep*yyy;
+
+            int a = (size);  
             
-            int tlindex = xxx*scale;
-            int trindex = (xxx+1)*scale;
-            int blindex = (xxx+1)*scale+(yyy+1)*size*scale*scale;
-            int brindex = (xxx+1)*scale+(yyy+1)*size*scale*scale + size/scale;
+            int b = 0;
+            if(yyy>0)
+              b = yyy;
             
-            println(tlindex+" "+CornerPinSurface.TL);
+            int tlindex = (xxx+b)+(yyy)*a;
+            int trindex = (xxx+1+b)+(yyy)*a;
+            
+            
+            int brindex = (xxx+2+b)+(yyy+1)*a  ;
+            int blindex = (xxx+1+b)+(yyy+1)*a;
+            
+
+        /*    println(tlindex+" "+CornerPinSurface.TL);
             println(trindex+" "+CornerPinSurface.TR);
             println(blindex+" "+CornerPinSurface.BL);
             println(brindex+" "+CornerPinSurface.BR);
-            println();
+            println();*/
 
             MeshPoint pointTL = surface.getMeshPoint(tlindex);
             MeshPoint pointTR = surface.getMeshPoint(trindex);
@@ -301,6 +319,9 @@ public void draw() {
              MeshPoint pointBL = surface.getMeshPoint(CornerPinSurface.BL);
              MeshPoint pointBR = surface.getMeshPoint(CornerPinSurface.BR);
              */
+            
+            
+            
             offscreen.vertex(xo, yo, pointTL.x, pointTL.y);
             offscreen.vertex(xo+xstep, yo, pointTR.x, pointTR.y);
 
@@ -308,6 +329,7 @@ public void draw() {
             offscreen.vertex(xo, yo+ystep, pointBL.x, pointBL.y);
           }
         }
+
 
         // offscreen.ellipse(surfaceMouse.x, surfaceMouse.y, 75, 75);
         offscreen.endShape();
@@ -490,12 +512,43 @@ public void keyPressed() {
     // saves the layout
     //  ks.save();
     break;
+
+  case 'a':
+    if (mode == MODE_CONFIG) {
+      CornerPinSurface surface = surfaces.get(data.currentSurface);
+    } else {
+      CornerPinSurface surfaceTarget = surfacesTarget.get(data.currentSurface);
+    }
+    break;
+
+  case '1':
+    pointSelected = CornerPinSurface.TL;
+    break;
+  case '2':
+    pointSelected = CornerPinSurface.TR;
+    break;
+
+  case '3':
+    pointSelected = CornerPinSurface.BL;
+    break;
+
+  case '4':
+    pointSelected = CornerPinSurface.BR;
+    break;
+
   case 'n':
-    // saves the layout
+    //para ver los planos de uno en uno
     //  ks.save();
     data.currentSurface++;
     if (data.currentSurface >= surfaces.size())
       data.currentSurface = 0;
+    break;
+
+
+  case 'C':
+    //para ver los planos de uno en uno
+    //  ks.save();
+    save("captura.jpg");
     break;
   }
 }
